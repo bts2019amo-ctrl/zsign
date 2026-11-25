@@ -1,0 +1,36 @@
+name: Build zsign for macOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install pkg-config openssl
+
+      - name: Build
+        run: |
+          cd build/macos
+          make clean
+          make -j"$(sysctl -n hw.ncpu)"
+          chmod +x ../../bin/zsign
+
+      - name: Smoke test
+        run: ./bin/zsign -v
+
+      - name: Inspect binary
+        run: file bin/zsign
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zsign-macos-arm64-v1.1.3
+          path: bin/zsign
+          if-no-files-found: error
